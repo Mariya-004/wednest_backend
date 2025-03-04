@@ -18,10 +18,26 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 // Connect to database
 connectDB();
 app.use(express.json());
+app.use(express.json());
+app.use(cookieParser()); // For handling cookies
+
+// ✅ CORS FIX
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Credentials", "true");
+    
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(cors({
     origin: [
-        "http://localhost:3000",
-        "https://wednest-frontend-r88ejtdwv-mariya-004s-projects.vercel.app"
+        "http://localhost:3000", 
+        "https://wednest-frontend-orcin.vercel.app"
     ],
     credentials: true
 }));
