@@ -17,9 +17,8 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Connect to database
 connectDB();
+
 app.use(express.json());
-app.use(express.json());
-app.use(cookieParser()); // For handling cookies
 
 // ✅ CORS FIX
 app.use((req, res, next) => {
