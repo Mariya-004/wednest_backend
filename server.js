@@ -167,7 +167,7 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         };
 
         if (req.file) {
-            const imageUrl = `${URL}://${req.get("host")}/uploads/${req.file.filename}`;
+            const imageUrl = `${URL}/uploads/${req.file.filename}`;
             updatedData.profile_image = imageUrl;
             
         }
@@ -252,11 +252,11 @@ app.put('/api/vendor/profile', upload.fields([{ name: 'profileImage', maxCount: 
         let updatedData = { businessName, vendorType, contactNumber, location, pricing, serviceDescription };
 
         if (req.files.profileImage) {
-            updatedData.profile_image = `${URL}://${req.get("host")}/uploads/${req.files.profileImage[0].filename}`;
+            updatedData.profile_image = `${URL}/uploads/${req.files.profileImage[0].filename}`;
         }
 
         if (req.files.serviceImages) {
-            updatedData.service_images = req.files.serviceImages.map(file => `${URL}://${req.get("host")}/uploads/${file.filename}`);
+            updatedData.service_images = req.files.serviceImages.map(file => `${URL}/uploads/${file.filename}`);
         }
 
         const updatedVendor = await Vendor.findByIdAndUpdate(user_id.trim(), updatedData, { new: true });
