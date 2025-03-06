@@ -27,8 +27,8 @@ app.use(cors({
     credentials: true
 }));
 // ✅ CORS FIX
-/*app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", req.headers.origin); 
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.header("Access-Control-Allow-Credentials", "true");
@@ -37,7 +37,7 @@ app.use(cors({
         return res.sendStatus(200);
     }
     next();
-});*/
+});
 
 
 // Serve uploaded files statically
@@ -169,7 +169,6 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         if (req.file) {
             const imageUrl = `${URL}/uploads/${req.file.filename}`;
             updatedData.profile_image = imageUrl;
-            
         }
 
         const updatedCouple = await Couple.findByIdAndUpdate(user_id, updatedData, { new: true });
