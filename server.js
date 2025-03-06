@@ -19,16 +19,10 @@ const URL = process.env.BACKEND_URL || 'http://localhost:3000';
 connectDB();
 
 app.use(express.json());
-app.use(cors({
-    origin: [
-        "http://localhost:3000", 
-        "https://wednest-frontend-orcin.vercel.app"
-    ],
-    credentials: true
-}));
+
 // ✅ CORS FIX
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", req.headers.origin); 
+    res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.header("Access-Control-Allow-Credentials", "true");
@@ -39,7 +33,13 @@ app.use((req, res, next) => {
     next();
 });
 
-
+app.use(cors({
+    origin: [
+        "http://localhost:3000", 
+        "https://wednest-frontend-orcin.vercel.app"
+    ],
+    credentials: true
+}));
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -169,6 +169,7 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         if (req.file) {
             const imageUrl = `${URL}/uploads/${req.file.filename}`;
             updatedData.profile_image = imageUrl;
+            
         }
 
         const updatedCouple = await Couple.findByIdAndUpdate(user_id, updatedData, { new: true });
