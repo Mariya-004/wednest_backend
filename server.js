@@ -41,7 +41,13 @@ app.use(cors({
     credentials: true
 }));
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*"); // Change * to a specific frontend domain if needed
+    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    next();
+}, express.static(path.join(__dirname, 'uploads')));
+/*app.use('/uploads', express.static(path.join(__dirname, 'uploads')));*/
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
