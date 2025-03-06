@@ -18,20 +18,6 @@ const URL = process.env.BACKEND_URL || 'http://localhost:3000';
 // Connect to database
 connectDB();
 
-app.use(express.json());
-
-// ✅ CORS FIX
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Credentials", "true");
-    
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(200);
-    }
-    next();
-});
 
 app.use(cors({
     origin: [
@@ -40,6 +26,22 @@ app.use(cors({
     ],
     credentials: true
 }));
+// ✅ CORS FIX
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Content-Type", "application/json");
+    res.header("Access-Control-Allow-Credentials", "true");
+    
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
+
+app.use(express.json());
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
