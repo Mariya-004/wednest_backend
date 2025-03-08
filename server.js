@@ -3,13 +3,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const cors = require("cors");
-const multer = require('multer');
-const path = require('path'); 
+const cors = require("cors");;
 const connectDB = require('./db');
 const Couple = require('./models/Couple');
 const Vendor = require('./models/Vendor');
-
+const { upload } = require('./cloudinaryConfig');
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +19,7 @@ connectDB();
 app.use(express.json());
 
 // ✅ CORS FIX
-/*app.use((req, res, next) => {
+app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -31,48 +29,16 @@ app.use(express.json());
         return res.sendStatus(200);
     }
     next();
-});*/
+});
 
 app.use(cors({
     origin: [
         "http://localhost:3000", 
-        "https://wednest-frontend-orcin.vercel.app",
-        "https://wednest-backend-0ti8.onrender.com"
+        "https://wednest-frontend-orcin.vercel.app"
     ],
     credentials: true
 }));
-// Serve uploaded files statically
-/*app.use('/uploads', (req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*"); // Change * to a specific frontend domain if needed
-    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    next();
-}, express.static(path.join(__dirname, 'uploads')));*/
-/*app.use('/uploads', express.static(path.join(__dirname, 'uploads')));*/
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.png')) {
-            res.setHeader('Content-Type', 'image/png');
-        } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
-            res.setHeader('Content-Type', 'image/jpeg');
-        }
-    }
-}));
 
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Store files in the 'uploads' directory
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname); // Unique file naming
-    }
-});
-
-const upload = multer({ storage });
-
-// Middleware for multiple images (max 5)
-const uploadMultiple = upload.array('serviceImages', 5);
 
 app.get("/", (req, res) => {
   res.send("Backend is running!");
@@ -168,7 +134,7 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         return res.status(400).json({ status: "error", message: "User ID is required" });
     }
 
-    // Trim user_id and validate format
+    // Validate user_id format
     user_id = user_id.trim();
     if (!mongoose.Types.ObjectId.isValid(user_id)) {
         return res.status(400).json({ status: "error", message: "Invalid User ID format" });
@@ -183,9 +149,7 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         };
 
         if (req.file) {
-            const imageUrl = `${URL}/uploads/${req.file.filename}`;
-            updatedData.profile_image = imageUrl;
-            
+            updatedData.profile_image = req.file.path; // Cloudinary URL
         }
 
         const updatedCouple = await Couple.findByIdAndUpdate(user_id, updatedData, { new: true });
@@ -200,6 +164,7 @@ app.put('/api/couple/profile', upload.single('profileImage'), async (req, res) =
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+
 
 // ✅ GET COUPLE PROFILE API
 app.get('/api/couple/profile/:user_id', async (req, res) => {
@@ -268,11 +233,11 @@ app.put('/api/vendor/profile', upload.fields([{ name: 'profileImage', maxCount: 
         let updatedData = { businessName, vendorType, contactNumber, location, pricing, serviceDescription };
 
         if (req.files.profileImage) {
-            updatedData.profile_image = `${URL}/uploads/${req.files.profileImage[0].filename}`;
+            updatedData.profile_image = req.files.profileImage[0].path; // Cloudinary URL
         }
 
         if (req.files.serviceImages) {
-            updatedData.service_images = req.files.serviceImages.map(file => `${URL}/uploads/${file.filename}`);
+            updatedData.service_images = req.files.serviceImages.map(file => file.path);
         }
 
         const updatedVendor = await Vendor.findByIdAndUpdate(user_id.trim(), updatedData, { new: true });
@@ -287,6 +252,7 @@ app.put('/api/vendor/profile', upload.fields([{ name: 'profileImage', maxCount: 
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+
 
 // ✅ GET VENDOR PROFILE API
 app.get('/api/vendor/profile/:vendor_id', async (req, res) => {
