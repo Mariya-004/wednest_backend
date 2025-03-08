@@ -43,7 +43,7 @@ app.use(cors({
 app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
-
+//
 // ✅ REGISTER API
 app.post('/api/register', async (req, res) => {
     const { username, email, password, user_type } = req.body;
