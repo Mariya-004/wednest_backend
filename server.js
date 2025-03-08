@@ -333,6 +333,27 @@ app.get('/api/vendors/type/:vendorType', async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+// ✅ GET VENDOR DETAILS API
+app.get('/api/vendor/details/:vendor_id', async (req, res) => {
+    let { vendor_id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(vendor_id.trim())) {
+        return res.status(400).json({ status: "error", message: "Invalid Vendor ID format" });
+    }
+
+    try {
+        const vendor = await Vendor.findById(vendor_id.trim());
+
+        if (!vendor) {
+            return res.status(404).json({ status: "error", message: "Vendor not found" });
+        }
+
+        res.status(200).json({ status: "success", data: vendor });
+    } catch (error) {
+        console.error("Get Vendor Details Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
 
 
 // ✅ SERVER START
