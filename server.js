@@ -21,7 +21,7 @@ connectDB();
 app.use(express.json());
 
 // ✅ CORS FIX
-app.use((req, res, next) => {
+/*app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "https://wednest-frontend-orcin.vercel.app"); 
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -31,23 +31,33 @@ app.use((req, res, next) => {
         return res.sendStatus(200);
     }
     next();
-});
+});*/
 
 app.use(cors({
     origin: [
         "http://localhost:3000", 
-        "https://wednest-frontend-orcin.vercel.app"
+        "https://wednest-frontend-orcin.vercel.app",
+        "https://wednest-backend-0ti8.onrender.com"
     ],
     credentials: true
 }));
 // Serve uploaded files statically
-app.use('/uploads', (req, res, next) => {
+/*app.use('/uploads', (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*"); // Change * to a specific frontend domain if needed
     res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type");
     next();
-}, express.static(path.join(__dirname, 'uploads')));
+}, express.static(path.join(__dirname, 'uploads')));*/
 /*app.use('/uploads', express.static(path.join(__dirname, 'uploads')));*/
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.png')) {
+            res.setHeader('Content-Type', 'image/png');
+        } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+            res.setHeader('Content-Type', 'image/jpeg');
+        }
+    }
+}));
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
