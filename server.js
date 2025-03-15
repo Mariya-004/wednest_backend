@@ -7,6 +7,7 @@ const cors = require("cors");;
 const connectDB = require('./db');
 const Couple = require('./models/Couple');
 const Vendor = require('./models/Vendor');
+const Request = require('./models/Request');
 const { upload } = require('./cloudinaryConfig');
 dotenv.config();
 const app = express();
@@ -354,7 +355,62 @@ app.get('/api/vendor/details/:vendor_id', async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+// ✅ SEND REQUEST API
+app.post('/api/request', async (req, res) => {
+    const {couple_id, vendor_id}=req.body;
+    if(!couple_id || !vendor_id){
+        return res.status(400).json({status: "error", message: "Couple ID and Vendor ID are required"});
+    }
+    try{
+        const existingRequest=await Request.findOne({couple_id, vendor_id, status: "Pending"});
+        if(existingRequest){
+            return res.status(400).json({status: "error", message: "Request already sent waiting for response"});
+        }
+        // Create new request
+        const newRequest=new Request({couple_id, vendor_id});
+        await newRequest.save();
+        res.status(201).json({status: "success", message: "Request sent successfully"});
+    }catch(error){
+        console.error("Send Request Error:", error);
+        res.status(500).json({status: "error", message: "Server error"});
 
+    }
+});
+app.get("/api/couple/requests/:couple_id", async (req, res) => {
+    const { couple_id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(couple_id)) {
+        return res.status(400).json({ status: "error", message: "Invalid Couple ID" });
+    }
+
+    try {
+        const requests = await Request.find({ couple_id })
+            .populate("vendor_id", "username businessName vendorType");
+
+        res.status(200).json({ status: "success", data: requests });
+    } catch (error) {
+        console.error("Fetch Requests Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
+
+app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
+    const { vendor_id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(vendor_id)) {
+        return res.status(400).json({ status: "error", message: "Invalid Vendor ID" });
+    }
+
+    try {
+        const requests = await Request.find({ vendor_id })
+            .populate("couple_id", "username email");
+
+        res.status(200).json({ status: "success", data: requests });
+    } catch (error) {
+        console.error("Fetch Requests Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
 
 // ✅ SERVER START
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
