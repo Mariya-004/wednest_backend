@@ -358,6 +358,7 @@ app.get('/api/vendor/details/:vendor_id', async (req, res) => {
 // ✅ SEND REQUEST API
 app.post('/api/request', async (req, res) => {
     const {couple_id, vendor_id}=req.body;
+    console.log("Incoming Request Body:", req.body);
     if(!couple_id || !vendor_id){
         return res.status(400).json({status: "error", message: "Couple ID and Vendor ID are required"});
     }
