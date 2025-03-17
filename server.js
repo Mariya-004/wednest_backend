@@ -417,15 +417,22 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
 app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
 
+    // ✅ Validate if all fields are present
     if (!couple_id || !vendor_id || !service_type || !price || !request_id) {
         return res.status(400).json({ status: "error", message: "All fields are required" });
     }
 
+    // ✅ Validate if couple_id is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(couple_id)) {
+        return res.status(400).json({ status: "error", message: "Invalid couple ID format" });
+    }
+
     try {
-        let cart = await Cart.findOne({ couple_id });
+        const coupleObjectId = new mongoose.Types.ObjectId(couple_id); // Convert couple_id to ObjectId
+        let cart = await Cart.findOne({ couple_id: coupleObjectId });
 
         if (!cart) {
-            cart = new Cart({ couple_id, items: [], total_budget: 0 });
+            cart = new Cart({ couple_id: coupleObjectId, items: [], total_budget: 0 });
         }
 
         cart.items.push({
@@ -441,105 +448,7 @@ app.post("/api/cart/add", async (req, res) => {
 
         res.status(201).json({ status: "success", message: "Item added to cart", data: cart });
     } catch (error) {
-        console.error("Add to Cart Error:", error);
-        res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
-// ✅ GET CART DETAILS FOR A COUPLE
-app.get("/api/cart/:couple_id", async (req, res) => {
-    const { couple_id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(couple_id)) {
-        return res.status(400).json({ status: "error", message: "Invalid Couple ID format" });
-    }
-
-    try {
-        const cart = await Cart.findOne({ couple_id }).populate("items.vendor_id", "username businessName vendorType");
-
-        if (!cart) {
-            return res.status(404).json({ status: "error", message: "Cart not found" });
-        }
-
-        res.status(200).json({ status: "success", data: cart });
-    } catch (error) {
-        console.error("Fetch Cart Error:", error);
-        res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
-
-// ✅ UPDATE CART ITEM STATUS
-app.put("/api/cart/update/:cart_id/:item_id", async (req, res) => {
-    const { cart_id, item_id } = req.params;
-    const { status } = req.body;
-
-    if (!["Waiting for Confirmation", "Confirmed by Vendor", "Declined by Vendor"].includes(status)) {
-        return res.status(400).json({ status: "error", message: "Invalid status value" });
-    }
-
-    try {
-        const cart = await Cart.findById(cart_id);
-        if (!cart) {
-            return res.status(404).json({ status: "error", message: "Cart not found" });
-        }
-
-        const item = cart.items.id(item_id);
-        if (!item) {
-            return res.status(404).json({ status: "error", message: "Item not found" });
-        }
-
-        item.status = status;
-        await cart.save();
-
-        res.status(200).json({ status: "success", message: "Item status updated", data: cart });
-    } catch (error) {
-        console.error("Update Cart Item Error:", error);
-        res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
-
-// ✅ REMOVE ITEM FROM CART
-app.delete("/api/cart/remove/:cart_id/:item_id", async (req, res) => {
-    const { cart_id, item_id } = req.params;
-
-    try {
-        const cart = await Cart.findById(cart_id);
-        if (!cart) {
-            return res.status(404).json({ status: "error", message: "Cart not found" });
-        }
-
-        const item = cart.items.id(item_id);
-        if (!item) {
-            return res.status(404).json({ status: "error", message: "Item not found" });
-        }
-
-        cart.total_budget -= item.price;
-        item.remove();
-        await cart.save();
-
-        res.status(200).json({ status: "success", message: "Item removed from cart", data: cart });
-    } catch (error) {
-        console.error("Remove Cart Item Error:", error);
-        res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
-
-// ✅ CLEAR ENTIRE CART
-app.delete("/api/cart/clear/:couple_id", async (req, res) => {
-    const { couple_id } = req.params;
-
-    try {
-        const cart = await Cart.findOne({ couple_id });
-        if (!cart) {
-            return res.status(404).json({ status: "error", message: "Cart not found" });
-        }
-
-        cart.items = [];
-        cart.total_budget = 0;
-        await cart.save();
-
-        res.status(200).json({ status: "success", message: "Cart cleared", data: cart });
-    } catch (error) {
-        console.error("Clear Cart Error:", error);
+        console.error("🚨 Add to Cart Error:", error);
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
