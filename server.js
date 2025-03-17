@@ -35,7 +35,7 @@ app.use((req, res, next) => {
 
 app.use(cors({
     origin: [
-        "http://localhost:3000", 
+        "http://localhost:3001", 
         "https://wednest-frontend-orcin.vercel.app"
     ],
     credentials: true
@@ -413,37 +413,47 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
-// ✅ ADD ITEM TO CART
 app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
 
-    // ✅ Validate if all fields are present
+    // ✅ Validate required fields
     if (!couple_id || !vendor_id || !service_type || !price || !request_id) {
         return res.status(400).json({ status: "error", message: "All fields are required" });
     }
 
-    // ✅ Validate if couple_id is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(couple_id)) {
-        return res.status(400).json({ status: "error", message: "Invalid couple ID format" });
+    // ✅ Validate MongoDB ObjectId fields
+    if (!mongoose.Types.ObjectId.isValid(couple_id) || 
+        !mongoose.Types.ObjectId.isValid(vendor_id) || 
+        !mongoose.Types.ObjectId.isValid(request_id)) {
+        return res.status(400).json({ status: "error", message: "Invalid ID format" });
+    }
+
+    // ✅ Validate and parse price
+    const parsedPrice = Number(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        return res.status(400).json({ status: "error", message: "Invalid price format" });
     }
 
     try {
-        const coupleObjectId = new mongoose.Types.ObjectId(couple_id); // Convert couple_id to ObjectId
+        const coupleObjectId = new mongoose.Types.ObjectId(couple_id);
         let cart = await Cart.findOne({ couple_id: coupleObjectId });
 
         if (!cart) {
             cart = new Cart({ couple_id: coupleObjectId, items: [], total_budget: 0 });
         }
 
+        // ✅ Add new item to cart
         cart.items.push({
             vendor_id,
             service_type,
-            price,
+            price: parsedPrice,
             request_id,
             status: "Waiting for Confirmation"
         });
 
-        cart.total_budget += price;
+        // ✅ Ensure total_budget is always valid
+        cart.total_budget = (cart.total_budget || 0) + parsedPrice;
+
         await cart.save();
 
         res.status(201).json({ status: "success", message: "Item added to cart", data: cart });
@@ -452,6 +462,7 @@ app.post("/api/cart/add", async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+
 
 
 
