@@ -8,6 +8,7 @@ const connectDB = require('./db');
 const Couple = require('./models/Couple');
 const Vendor = require('./models/Vendor');
 const Request = require('./models/Request');
+const Cart = require('./models/Cart');
 const { upload } = require('./cloudinaryConfig');
 dotenv.config();
 const app = express();
