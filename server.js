@@ -413,6 +413,41 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+
+// ✅ get request_id api
+app.get("/api/request-id", async (req, res) => {
+    const { couple_id, vendor_id } = req.query;
+
+    // Validate required fields
+    if (!couple_id || !vendor_id) {
+        return res.status(400).json({ status: "error", message: "couple_id and vendor_id are required" });
+    }
+
+    // Validate MongoDB Object IDs
+    if (!mongoose.Types.ObjectId.isValid(couple_id) || !mongoose.Types.ObjectId.isValid(vendor_id)) {
+        return res.status(400).json({ status: "error", message: "Invalid couple_id or vendor_id format" });
+    }
+
+    try {
+        // Assuming you have a Request model that stores requests
+        const request = await Request.findOne({ couple_id, vendor_id });
+
+        if (!request) {
+            return res.status(404).json({ status: "error", message: "No request found for given couple_id and vendor_id" });
+        }
+
+        res.status(200).json({
+            status: "success",
+            request_id: request._id, // or request.request_id if you store it differently
+            data: request
+        });
+    } catch (error) {
+        console.error("🚨 Fetch Request ID Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
+
+// ✅ ADD TO CART API
 app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
 
