@@ -492,7 +492,7 @@ app.get("/api/request-id", async (req, res) => {
   
 // get couple's budget api
 app.get("/api/couple/budget/:couple_id", async (req, res) => {
-    const {couple_id} =req.body;
+    const {couple_id} =req.params;
     if (!couple_id) {
         return res.status(400).json({ status: "error", message: "Couple ID is required" });
     }
