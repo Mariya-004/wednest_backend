@@ -416,19 +416,16 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
 app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
 
-    // ✅ Validate required fields
     if (!couple_id || !vendor_id || !service_type || !price || !request_id) {
         return res.status(400).json({ status: "error", message: "All fields are required" });
     }
 
-    // ✅ Validate MongoDB ObjectId fields
     if (!mongoose.Types.ObjectId.isValid(couple_id) || 
         !mongoose.Types.ObjectId.isValid(vendor_id) || 
         !mongoose.Types.ObjectId.isValid(request_id)) {
         return res.status(400).json({ status: "error", message: "Invalid ID format" });
     }
 
-    // ✅ Validate and parse price
     const parsedPrice = Number(price);
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
         return res.status(400).json({ status: "error", message: "Invalid price format" });
@@ -442,26 +439,31 @@ app.post("/api/cart/add", async (req, res) => {
             cart = new Cart({ couple_id: coupleObjectId, items: [], total_budget: 0 });
         }
 
-        // ✅ Add new item to cart
-        cart.items.push({
+        const newItem = {
             vendor_id,
             service_type,
             price: parsedPrice,
-            request_id,
+            request_id,  // Store request ID
             status: "Waiting for Confirmation"
-        });
+        };
 
-        // ✅ Ensure total_budget is always valid
+        cart.items.push(newItem);
         cart.total_budget = (cart.total_budget || 0) + parsedPrice;
-
         await cart.save();
 
-        res.status(201).json({ status: "success", message: "Item added to cart", data: cart });
+        res.status(201).json({ 
+            status: "success", 
+            message: "Item added to cart", 
+            data: cart,
+            request_id  // ✅ Send back request_id
+        });
+
     } catch (error) {
         console.error("🚨 Add to Cart Error:", error);
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
+
 
 
 
