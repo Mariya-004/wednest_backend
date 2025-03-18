@@ -414,88 +414,98 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
     }
 });
 
-// ✅ get request_id api
 app.get("/api/request-id", async (req, res) => {
     const { couple_id, vendor_id } = req.query;
-
-    // Validate required fields
+  
     if (!couple_id || !vendor_id) {
-        return res.status(400).json({ status: "error", message: "couple_id and vendor_id are required" });
+      return res.status(400).json({ status: "error", message: "couple_id and vendor_id are required" });
     }
-
-    // Validate MongoDB Object IDs
+  
     if (!mongoose.Types.ObjectId.isValid(couple_id) || !mongoose.Types.ObjectId.isValid(vendor_id)) {
-        return res.status(400).json({ status: "error", message: "Invalid couple_id or vendor_id format" });
+      return res.status(400).json({ status: "error", message: "Invalid couple_id or vendor_id format" });
     }
-
+  
     try {
-        // Assuming you have a Request model that stores requests
-        const request = await Request.findOne({ couple_id, vendor_id });
-
-        if (!request) {
-            return res.status(404).json({ status: "error", message: "No request found for given couple_id and vendor_id" });
-        }
-
-        res.status(200).json({
-            status: "success",
-            request_id: request._id, // or request.request_id if you store it differently
-            data: request
-        });
+      const request = await Request.findOne({ couple_id, vendor_id });
+  
+      if (!request) {
+        return res.status(404).json({ status: "error", message: "No request found for given couple_id and vendor_id" });
+      }
+  
+      res.status(200).json({
+        status: "success",
+        request_id: request._id,
+        data: request,
+      });
     } catch (error) {
-        console.error("🚨 Fetch Request ID Error:", error);
-        res.status(500).json({ status: "error", message: "Server error" });
+      console.error("🚨 Fetch Request ID Error:", error);
+      res.status(500).json({ status: "error", message: "Server error" });
     }
-});
+  });
+  
 
-app.post("/api/cart/add", async (req, res) => {
+  app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
-
-    // ✅ Validate required fields
+  
     if (!couple_id || !vendor_id || !service_type || !price || !request_id) {
-        return res.status(400).json({ status: "error", message: "All fields are required" });
+      return res.status(400).json({ status: "error", message: "All fields are required" });
     }
-
-    // ✅ Validate MongoDB ObjectId fields
-    if (!mongoose.Types.ObjectId.isValid(couple_id) || 
-        !mongoose.Types.ObjectId.isValid(vendor_id) || 
-        !mongoose.Types.ObjectId.isValid(request_id)) {
-        return res.status(400).json({ status: "error", message: "Invalid ID format" });
+  
+    if (
+      !mongoose.Types.ObjectId.isValid(couple_id) ||
+      !mongoose.Types.ObjectId.isValid(vendor_id) ||
+      !mongoose.Types.ObjectId.isValid(request_id)
+    ) {
+      return res.status(400).json({ status: "error", message: "Invalid ID format" });
     }
-
-    // ✅ Validate and parse price
+  
     const parsedPrice = Number(price);
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        return res.status(400).json({ status: "error", message: "Invalid price format" });
+      return res.status(400).json({ status: "error", message: "Invalid price format" });
     }
-
+  
     try {
-        const coupleObjectId = new mongoose.Types.ObjectId(couple_id);
-        let cart = await Cart.findOne({ couple_id: coupleObjectId });
-
-        if (!cart) {
-            cart = new Cart({ couple_id: coupleObjectId, items: [], total_budget: 0 });
-        }
-
-        // ✅ Add new item to cart
-        cart.items.push({
-            vendor_id,
-            service_type,
-            price: parsedPrice,
-            request_id,
-            status: "Waiting for Confirmation"
-        });
-
-        // ✅ Ensure total_budget is always valid
-        cart.total_budget = (cart.total_budget || 0) + parsedPrice;
-
-        await cart.save();
-
-        res.status(201).json({ status: "success", message: "Item added to cart", data: cart });
+      let cart = await Cart.findOne({ couple_id });
+  
+      if (!cart) {
+        cart = new Cart({ couple_id, items: [], total_budget: 0 });
+      }
+  
+      cart.items.push({
+        vendor_id,
+        service_type,
+        price: parsedPrice,
+        request_id,
+        status: "Waiting for Confirmation",
+      });
+  
+      cart.total_budget += parsedPrice;
+  
+      await cart.save();
+  
+      res.status(201).json({ status: "success", message: "Item added to cart", data: cart });
     } catch (error) {
-        console.error("🚨 Add to Cart Error:", error);
+      console.error("🚨 Add to Cart Error:", error);
+      res.status(500).json({ status: "error", message: "Server error" });
+    }
+  });
+  
+// get couple's budget api
+app.get("/api/couple/budget/:couple_id", async (req, res) => {
+    const {couple_id} =req.body;
+    if (!couple_id) {
+        return res.status(400).json({ status: "error", message: "Couple ID is required" });
+    }
+    try {
+        const couple = await Couple.findById(couple_id);
+        if (!couple) {
+            return res.status(404).json({ status: "error", message: "Couple not found" });
+        }
+        res.status(200).json({ status: "success", data: couple.budget });
+    } catch (error) {
+        console.error("Get Couple Budget Error:", error);
         res.status(500).json({ status: "error", message: "Server error" });
     }
-});
-
+})
 // ✅ SERVER START
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));

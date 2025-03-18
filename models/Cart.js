@@ -19,16 +19,16 @@ const cartSchema = new mongoose.Schema(
         status: {
           type: String,
           enum: [
-            "Waiting for Confirmation",  // Pending request
-            "Confirmed by Vendor",      // Accepted request
-            "Declined by Vendor"        // Rejected request
+            "Waiting for Confirmation",  
+            "Confirmed by Vendor",      
+            "Declined by Vendor"        
           ],
           default: "Waiting for Confirmation",
         },
         request_id: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Request",
-          required: true, // This links the cart item to the actual request
+          required: true,
         },
       },
     ],
