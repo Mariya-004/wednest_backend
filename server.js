@@ -529,6 +529,54 @@ app.get('/api/cart/:couple_id', async (req, res) => {
       res.status(500).json({ status: "error", message: "Server error" });
     }
   });
+
+  // delete item from cart api
+  app.delete('/api/cart/remove', async (req, res) => {
+    const { couple_id, vendor_id } = req.body;
+
+    if (!couple_id || !vendor_id) {
+        return res.status(400).json({ status: "error", message: "Couple ID and Vendor ID are required" });
+    }
+
+    try {
+        // Find the couple's cart
+        const cart = await Cart.findOne({ couple_id });
+
+        if (!cart) {
+            return res.status(404).json({ status: "error", message: "Cart not found for this couple" });
+        }
+
+        // Find the item inside the cart
+        const item = cart.items.find(
+            (i) => i.vendor_id.toString() === vendor_id.toString()
+        );
+
+        if (!item) {
+            return res.status(404).json({ status: "error", message: "Item not found in cart" });
+        }
+
+        // Prevent removal if vendor has confirmed
+        if (item.status === "Confirmed by Vendor") {
+            return res.status(400).json({ status: "error", message: "Cannot remove item confirmed by vendor" });
+        }
+
+        // Remove the item
+        cart.items = cart.items.filter(
+            (i) => i.vendor_id.toString() !== vendor_id.toString()
+        );
+
+        // Recalculate total budget
+        cart.total_budget = cart.items.reduce((total, curr) => total + curr.price, 0);
+
+        await cart.save();
+
+        res.status(200).json({ status: "success", message: "Item removed from cart" });
+    } catch (error) {
+        console.error("Remove from Cart Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
+
   
 // ✅ SERVER START
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
