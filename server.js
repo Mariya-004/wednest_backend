@@ -507,5 +507,28 @@ app.get("/api/couple/budget/:couple_id", async (req, res) => {
         res.status(500).json({ status: "error", message: "Server error" });
     }
 })
+// get cart api
+app.get('/api/cart/:couple_id', async (req, res) => {
+    const { couple_id } = req.params;
+  
+    if (!mongoose.Types.ObjectId.isValid(couple_id.trim())) {
+      return res.status(400).json({ status: "error", message: "Invalid Couple ID" });
+    }
+  
+    try {
+      const cart = await Cart.findOne({ couple_id })
+        .populate('items.vendor_id', 'username businessName vendorType');
+  
+      if (!cart || cart.items.length === 0) {
+        return res.status(200).json({ status: "success", data: [], message: "No items in cart." });
+      }
+  
+      res.status(200).json({ status: "success", data: cart.items });
+    } catch (error) {
+      console.error("Fetch Cart Error:", error);
+      res.status(500).json({ status: "error", message: "Server error" });
+    }
+  });
+  
 // ✅ SERVER START
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
