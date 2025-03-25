@@ -405,7 +405,7 @@ app.get("/api/vendor/requests/:vendor_id", async (req, res) => {
 
     try {
         const requests = await Request.find({ vendor_id })
-            .populate("couple_id", "username email");
+            .populate("couple_id", "username email wedding_date");
 
         res.status(200).json({ status: "success", data: requests });
     } catch (error) {
