@@ -457,20 +457,27 @@ app.put('/api/request/:request_id', async (req, res) => {
     }
 
     try {
-        const request = await Request.findByIdAndUpdate(request_id.trim(), { status }, { new: true });
-
-        if (!request) {
-            return res.status(404).json({ status: "error", message: "Request not found" });
+        let request;
+        if (status === "Declined") {
+            request = await Request.findByIdAndDelete(request_id.trim());
+            if (!request) {
+                return res.status(404).json({ status: "error", message: "Request not found" });
+            }
+            return res.status(200).json({ status: "success", message: "Request declined and deleted successfully" });
+        } else {
+            request = await Request.findByIdAndUpdate(request_id.trim(), { status }, { new: true });
+            if (!request) {
+                return res.status(404).json({ status: "error", message: "Request not found" });
+            }
+            return res.status(200).json({ status: "success", message: `Request ${status.toLowerCase()} successfully`, data: request });
         }
-
-        res.status(200).json({ status: "success", message: `Request ${status.toLowerCase()} successfully`, data: request });
-    } catch (error) {
+    } catch (error) { // Corrected the syntax error here
         console.error("Update Request Status Error:", error);
         res.status(500).json({ status: "error", message: "Server error" });
     }
 });
 // ✅ ADD TO CART API
-  app.post("/api/cart/add", async (req, res) => {
+app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
   
     if (!couple_id || !vendor_id || !service_type || !price || !request_id) {
