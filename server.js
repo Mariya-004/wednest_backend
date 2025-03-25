@@ -443,7 +443,33 @@ app.get("/api/request-id", async (req, res) => {
     }
   });
   
+// ✅ ACCEPT/DECLINE REQUEST API
+app.put('/api/request/:request_id', async (req, res) => {
+    const { request_id } = req.params;
+    const { status } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(request_id.trim())) {
+        return res.status(400).json({ status: "error", message: "Invalid Request ID format" });
+    }
+
+    if (!["Accepted", "Declined"].includes(status)) {
+        return res.status(400).json({ status: "error", message: "Invalid status. Must be 'Accepted' or 'Declined'" });
+    }
+
+    try {
+        const request = await Request.findByIdAndUpdate(request_id.trim(), { status }, { new: true });
+
+        if (!request) {
+            return res.status(404).json({ status: "error", message: "Request not found" });
+        }
+
+        res.status(200).json({ status: "success", message: `Request ${status.toLowerCase()} successfully`, data: request });
+    } catch (error) {
+        console.error("Update Request Status Error:", error);
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
+// ✅ ADD TO CART API
   app.post("/api/cart/add", async (req, res) => {
     const { couple_id, vendor_id, service_type, price, request_id } = req.body;
   
@@ -577,6 +603,6 @@ app.get('/api/cart/:couple_id', async (req, res) => {
     }
 });
 
-  
+
 // ✅ SERVER START
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
