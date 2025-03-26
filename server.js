@@ -603,7 +603,10 @@ app.get('/api/cart/:couple_id', async (req, res) => {
 
         await cart.save();
 
-        res.status(200).json({ status: "success", message: "Item removed from cart" });
+        // Remove the associated request
+        await Request.findOneAndDelete({ couple_id, vendor_id });
+
+        res.status(200).json({ status: "success", message: "Item removed from cart and associated request deleted" });
     } catch (error) {
         console.error("Remove from Cart Error:", error);
         res.status(500).json({ status: "error", message: "Server error" });
